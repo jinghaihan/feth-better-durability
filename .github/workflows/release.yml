@@ -69,15 +69,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Mark release as untested
-        run: |
-          gh release view "${GITHUB_REF_NAME}" --json body --jq .body > generated-notes.md
-          printf '> [!WARNING]\n> Not yet tested in-game. Back up your save before testing this release.\n\n' > release-notes.md
-          cat generated-notes.md >> release-notes.md
-          gh release edit "${GITHUB_REF_NAME}" --notes-file release-notes.md
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Upload release files
         run: |
           project_version="$(tr -d '[:space:]' < VERSION)"
