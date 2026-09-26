@@ -1,0 +1,109 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: wuboyth/skyline-plugin-builder:latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Verify tag version
+        run: |
+          project_version="$(tr -d '[:space:]' < VERSION)"
+          cargo_version="$(sed -n 's/^version = "\([^"]*\)"/\1/p' Cargo.toml | head -n 1)"
+          test "${GITHUB_REF_NAME}" = "v${project_version}"
+          test "${cargo_version}" = "${project_version}"
+
+      - name: Build Skyline plugin
+        run: cargo skyline build --release
+
+      - name: Prepare and verify NRO
+        run: |
+          cp \
+            target/aarch64-skyline-switch/release/libfeth_infinite_weapon_durability.nro \
+            feth-infinite-weapon-durability.nro
+          python3 tools/verify_nro.py feth-infinite-weapon-durability.nro
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: feth-infinite-weapon-durability-release
+          path: feth-infinite-weapon-durability.nro
+          if-no-files-found: error
+
+  release:
+    needs: build
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: feth-infinite-weapon-durability-release
+
+      - name: Create installable package and checksums
+        run: |
+          project_version="$(tr -d '[:space:]' < VERSION)"
+          package_root="package/atmosphere/contents/010055D009F78000/romfs/skyline/plugins"
+          mkdir -p "${package_root}"
+          cp feth-infinite-weapon-durability.nro "${package_root}/feth-infinite-weapon-durability.nro"
+          (cd package && zip -r "../feth-infinite-weapon-durability-v${project_version}.zip" atmosphere)
+          sha256sum \
+            feth-infinite-weapon-durability.nro \
+            "feth-infinite-weapon-durability-v${project_version}.zip" \
+            > SHA256SUMS
+
+      - name: Generate release notes
+        run: npx changelogithub
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Mark release as untested
+        run: |
+          gh release view "${GITHUB_REF_NAME}" --json body --jq .body > generated-notes.md
+          printf '> [!WARNING]\n> Not yet tested in-game. Back up your save before testing this release.\n\n' > release-notes.md
+          cat generated-notes.md >> release-notes.md
+          gh release edit "${GITHUB_REF_NAME}" --notes-file release-notes.md
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload release files
+        run: |
+          project_version="$(tr -d '[:space:]' < VERSION)"
+          gh release upload "${GITHUB_REF_NAME}" \
+            feth-infinite-weapon-durability.nro \
+            "feth-infinite-weapon-durability-v${project_version}.zip" \
+            SHA256SUMS \
+            --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify downloadable release files
+        run: |
+          project_version="$(tr -d '[:space:]' < VERSION)"
+          mkdir release-download
+          gh release download "${GITHUB_REF_NAME}" \
+            --pattern feth-infinite-weapon-durability.nro \
+            --pattern "feth-infinite-weapon-durability-v${project_version}.zip" \
+            --dir release-download
+          test -s release-download/feth-infinite-weapon-durability.nro
+          test -s "release-download/feth-infinite-weapon-durability-v${project_version}.zip"
+          expected_nro_sha="$(grep ' feth-infinite-weapon-durability.nro$' SHA256SUMS | cut -d ' ' -f 1)"
+          actual_nro_sha="$(sha256sum release-download/feth-infinite-weapon-durability.nro | cut -d ' ' -f 1)"
+          test "${actual_nro_sha}" = "${expected_nro_sha}"
+          expected_zip_sha="$(grep " feth-infinite-weapon-durability-v${project_version}.zip$" SHA256SUMS | cut -d ' ' -f 1)"
+          actual_zip_sha="$(sha256sum "release-download/feth-infinite-weapon-durability-v${project_version}.zip" | cut -d ' ' -f 1)"
+          test "${actual_zip_sha}" = "${expected_zip_sha}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
