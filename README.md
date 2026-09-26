@@ -17,8 +17,9 @@ Prevents weapons from losing durability in Fire Emblem: Three Houses.
 
 ## Install
 
-Install the game-specific Skyline loader, then copy
-`feth-infinite-weapon-durability.nro` to:
+Install the game-specific Skyline loader, then download the NRO or installable
+ZIP from [Releases](https://github.com/jinghaihan/feth-infinite-weapon-durability/releases).
+Copy `feth-infinite-weapon-durability.nro` to:
 
 ```text
 sdmc:/atmosphere/contents/010055D009F78000/romfs/skyline/plugins/feth-infinite-weapon-durability.nro
@@ -27,6 +28,11 @@ sdmc:/atmosphere/contents/010055D009F78000/romfs/skyline/plugins/feth-infinite-w
 Fully restart the game. The NRO can coexist with other Skyline plugins that
 do not hook the same battle-consumption function. Remove the NRO to uninstall
 it; the plugin does not write metadata into save files.
+
+For Eden or Ryubing, install the same Skyline loader in the emulator's
+Atmosphere mod directory, then merge the release ZIP into its emulated SD card.
+The ZIP contains this plugin only, not the Skyline loader. Restart the emulator
+completely before testing.
 
 ## Behavior
 
