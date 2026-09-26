@@ -2,6 +2,9 @@
 
 Prevents weapons from losing durability in Fire Emblem: Three Houses.
 
+[![build](https://github.com/jinghaihan/feth-infinite-weapon-durability/actions/workflows/build.yml/badge.svg)](https://github.com/jinghaihan/feth-infinite-weapon-durability/actions/workflows/build.yml)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 > [!WARNING]
 > This plugin builds successfully but has not been tested in-game. Back up your
 > saves before trying it.

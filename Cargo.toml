@@ -5,6 +5,7 @@ edition = "2021"
 description = "Prevent weapon durability loss in Fire Emblem: Three Houses"
 license = "MIT"
 publish = false
+repository = "https://github.com/jinghaihan/feth-infinite-weapon-durability"
 
 [package.metadata.skyline]
 titleid = "010055D009F78000"
