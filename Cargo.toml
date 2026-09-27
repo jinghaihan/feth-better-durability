@@ -1,6 +1,6 @@
 [package]
 name = "feth-infinite-weapon-durability"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "Prevent weapon durability loss in Fire Emblem: Three Houses"
 license = "MIT"
