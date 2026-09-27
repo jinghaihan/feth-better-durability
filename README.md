@@ -1,6 +1,7 @@
 # FETH Infinite Weapon Durability
 
-Prevents weapons from losing durability in Fire Emblem: Three Houses.
+Prevents ordinary attacks from consuming weapon durability in Fire Emblem:
+Three Houses. Combat arts still consume their original durability cost.
 
 [![build](https://github.com/jinghaihan/feth-infinite-weapon-durability/actions/workflows/build.yml/badge.svg)](https://github.com/jinghaihan/feth-infinite-weapon-durability/actions/workflows/build.yml)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -36,8 +37,9 @@ completely before testing.
 
 ## Behavior
 
-- Normal attacks and combat actions pass zero durability cost for weapons.
-  Each weapon keeps its existing durability value and its own original maximum;
+- Ordinary weapon attacks, including follow-ups and counters, do not consume
+  durability. Combat arts keep their original durability cost, including arts
+  that exhaust the entire weapon. Each weapon keeps its own original maximum;
   no weapon is rewritten to `100`.
 - Spell uses, consumable items, and other non-weapon costs are unchanged.
 - A weapon that is already damaged stays damaged. This plugin does not repair

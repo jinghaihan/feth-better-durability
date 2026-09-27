@@ -4,11 +4,19 @@ pub const DISPLAY_VERSION: &[u8] = b"1.2.0";
 // These are text-relative offsets and original AArch64 instructions from the
 // FE3H 1.2.0 main NSO (Build ID 89048449BA238C8CF565518B83BF02D3).
 pub const BATTLE_CONSUME_OFFSET: usize = 0x000C_2E50;
-pub const TEXT_SIGNATURES: [(usize, u32); 6] = [
+pub const ATTACK_COST_OFFSET: usize = 0x000C_30A0;
+pub const TEXT_SIGNATURES: [(usize, u32); 13] = [
   (0x000C_2E50, 0xF81D_0FF5), // battle consume function prologue
   (0x000C_2E70, 0x940D_2608), // classify spell ID
   (0x000C_2E78, 0x5400_02A0), // branch to non-spell durability handling
   (0x000C_2EEC, 0x940D_26F5), // non-spell durability decrement call
+  (0x000C_30A0, 0xA9BD_57F6), // attack-cost function prologue
+  (0x000C_30B4, 0x3940_1EC8), // attack record kind at +7
+  (0x000C_30C4, 0x7100_5D1F), // all-durability attack kind 0x17
+  (0x000C_30DC, 0x7940_02C0), // attack record action ID at +0
+  (0x000C_30E8, 0x5400_00A0), // ordinary-attack sentinel 0xFFFF
+  (0x000C_30FC, 0x3940_2AC8), // attack record base cost at +0xA
+  (0x000C_3114, 0x97FF_FF4F), // attack cost reaches battle consume
   (0x0040_CAC0, 0x3940_0808), // load durability from item +2
   (0x0040_CACC, 0x3900_0808), // store durability to item +2
 ];
