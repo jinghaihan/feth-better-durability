@@ -7,8 +7,9 @@ Three Houses. Combat arts still consume their original durability cost.
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 > [!WARNING]
-> This plugin builds successfully but has not been tested in-game. Back up your
-> saves before trying it.
+> The current combat-art fix is covered by regression tests against a supplied
+> gameplay trace, but has not yet been verified in-game. Back up your saves
+> before trying it.
 
 ## Requirements
 
@@ -46,6 +47,9 @@ completely before testing.
   that exhaust the entire weapon. Each weapon keeps its own original maximum;
   no weapon is rewritten to `100`.
 - Spell uses, consumable items, and other non-weapon costs are unchanged.
+- Only the verified ordinary-attack call site receives free weapon uses.
+  Action-record settlement and unrecognized callers keep the game's original
+  cost. The plugin does not infer combat arts from action IDs or cost amounts.
 - A weapon that is already damaged stays damaged. This plugin does not repair
   old saves or alter the game's combat-art availability checks.
 - The plugin checks the title, displayed version, and original code signatures
@@ -70,21 +74,26 @@ diagnostic_log=true
 
 Fully restart the game after changing the file. When enabled, the plugin
 appends to `sdmc:/feth-better-durability.log`. It records the game
-version and hook checks, attack action and item durability, plus the caller
-and actual cost at the underlying durability-decrement function. It does not
-change the durability behavior of any newly observed call path. Diagnostic
-logging can slow the game during the first 2,048 item-decrement calls; after
-testing, remove the configuration file or set `diagnostic_log=false` and
+version and hook checks, action-record fields and item durability, plus the
+call path, requested cost, forwarded cost, and underlying durability changes.
+Action-record fields are diagnostic only and do not control the cost policy.
+It does not change the durability behavior of any newly observed call path.
+Diagnostic logging can slow the game during the first 2,048 item-decrement
+calls; after testing, remove the configuration file or set `diagnostic_log=false` and
 restart. An absent or invalid configuration leaves logging disabled and does
-not install the low-level diagnostic hook.
+not install the action-record or low-level diagnostic hooks.
 
 ## Build
 
 ```sh
 cargo fmt --check
 cargo test --locked
+python3 -m unittest discover -s tools -p 'test_*.py'
 cargo skyline check
 cargo skyline build --release
+python3 tools/verify_nro.py \
+  target/aarch64-skyline-switch/release/libfeth_better_durability.nro \
+  --elf target/aarch64-skyline-switch/release/libfeth_better_durability.so
 ```
 
 The NRO is written to

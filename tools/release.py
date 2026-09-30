@@ -84,9 +84,10 @@ def write_version(version: str) -> None:
 def verify_build() -> None:
   run("cargo", "fmt", "--check")
   run("cargo", "test", "--locked")
+  run("python3", "-m", "unittest", "discover", "-s", "tools", "-p", "test_*.py")
   run("cargo", "skyline", "check")
   run("cargo", "skyline", "build", "--release")
-  run("python3", "tools/verify_nro.py", NRO)
+  run("python3", "tools/verify_nro.py", NRO, "--elf", NRO.replace(".nro", ".so"))
 
 
 def main() -> None:

@@ -27,7 +27,8 @@ jobs:
           cp \
             target/aarch64-skyline-switch/release/libfeth_better_durability.nro \
             feth-better-durability.nro
-          python3 tools/verify_nro.py feth-better-durability.nro
+          python3 tools/verify_nro.py feth-better-durability.nro \
+            --elf target/aarch64-skyline-switch/release/libfeth_better_durability.so
 
       - uses: actions/upload-artifact@v7
         with:

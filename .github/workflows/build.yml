@@ -22,6 +22,9 @@ jobs:
       - name: Run host tests
         run: cargo test --locked
 
+      - name: Test compiled hook verifier
+        run: python3 -m unittest discover -s tools -p 'test_*.py'
+
   switch:
     runs-on: ubuntu-latest
     container: wuboyth/skyline-plugin-builder:latest
@@ -36,7 +39,8 @@ jobs:
           cp \
             target/aarch64-skyline-switch/release/libfeth_better_durability.nro \
             feth-better-durability.nro
-          python3 tools/verify_nro.py feth-better-durability.nro
+          python3 tools/verify_nro.py feth-better-durability.nro \
+            --elf target/aarch64-skyline-switch/release/libfeth_better_durability.so
 
       - uses: actions/upload-artifact@v7
         with:

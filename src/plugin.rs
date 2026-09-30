@@ -3,7 +3,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 use crate::{
   diagnostics,
-  durability::{effective_cost, is_combat_art},
+  durability::effective_cost,
   game::{layout::Item, profile},
 };
 
@@ -13,24 +13,27 @@ static RAW_LOG_COUNT: AtomicUsize = AtomicUsize::new(0);
 const RAW_LOG_LIMIT: usize = 2048;
 
 std::thread_local! {
-  static IN_COMBAT_ART: Cell<bool> = const { Cell::new(false) };
-  static ATTACK_CONTEXT: Cell<Option<(u16, u8)>> = const { Cell::new(None) };
+  static ATTACK_CONTEXT: Cell<Option<(u16, u8, u8)>> = const { Cell::new(None) };
   static IN_BATTLE_CONSUME: Cell<bool> = const { Cell::new(false) };
 }
 
 pub fn install() {
   let diagnostic = diagnostics::init();
+  diagnostics::append(concat!("plugin_version=", env!("CARGO_PKG_VERSION")));
   if !matches_supported_game() {
     diagnostics::append("hooks=not_installed");
     println!("[feth-better-durability] unsupported or modified game; hook not installed");
     return;
   }
 
-  skyline::install_hooks!(battle_consume_hook, attack_cost_hook);
+  skyline::install_hooks!(battle_consume_hook);
   if diagnostic {
-    skyline::install_hooks!(raw_durability_hook);
+    skyline::install_hooks!(attack_cost_hook, raw_durability_hook);
     diagnostics::append(
       "hooks=installed battle_consume=0xC2E50 attack_cost=0xC30A0 raw_durability=0x40CAC0",
+    );
+    diagnostics::append(
+      "cost_policy=verified_ordinary_callsite_only ordinary_caller=0xDD4F8 record_caller=0xC3114",
     );
   }
   println!("[feth-better-durability] ordinary weapon attacks do not consume durability");
@@ -101,11 +104,11 @@ fn attack_cost_hook(
     return call_original!(unit, item, attack_record, doubled_cost);
   };
 
-  // SAFETY: The original 1.2.0 function reads the action ID and kind from
-  // this caller-provided record before consuming weapon durability.
+  // SAFETY: The original function reads these fields from the live record.
+  // They are diagnostic data only: 0xFFFF also occurs for combat arts.
   let action_id = unsafe { record.as_ptr().cast::<u16>().read_unaligned() };
   let kind = unsafe { record.as_ptr().add(7).read() };
-  let combat_art = is_combat_art(action_id, kind);
+  let base_cost = unsafe { record.as_ptr().add(0xA).read() };
   let before = if log && !item.is_null() {
     Some(unsafe { core::ptr::addr_of!((*item).durability).read_unaligned() })
   } else {
@@ -115,23 +118,14 @@ fn attack_cost_hook(
   if log {
     let caller = caller_offset(return_address);
     diagnostics::append(&format!(
-      "attack_cost enter caller={caller:#x} item={item:p} action_id={action_id:#06x} kind={kind:#04x} combat_art={combat_art} doubled_cost={doubled_cost}"
+      "attack_cost enter caller={caller:#x} item={item:p} action_id={action_id:#06x} kind={kind:#04x} base_cost={base_cost} doubled_cost={doubled_cost}"
     ));
   }
 
-  IN_COMBAT_ART.with(|flag| {
-    let previous = flag.replace(combat_art);
-    let result = if diagnostics::enabled() {
-      ATTACK_CONTEXT.with(|context| {
-        let previous_context = context.replace(Some((action_id, kind)));
-        let result = call_original!(unit, item, attack_record, doubled_cost);
-        context.set(previous_context);
-        result
-      })
-    } else {
-      call_original!(unit, item, attack_record, doubled_cost)
-    };
-    flag.set(previous);
+  ATTACK_CONTEXT.with(|context| {
+    let previous_context = context.replace(Some((action_id, kind, base_cost)));
+    let result = call_original!(unit, item, attack_record, doubled_cost);
+    context.set(previous_context);
     if log {
       let after =
         before.map(|_| unsafe { core::ptr::addr_of!((*item).durability).read_unaligned() });
@@ -168,12 +162,12 @@ fn battle_consume_hook(unit: *mut c_void, item: *mut Item, requested_cost: i32) 
   } else {
     None
   };
-  let combat_art = IN_COMBAT_ART.with(Cell::get);
-  let forwarded_cost = effective_cost(item_id, combat_art, requested_cost);
+  let caller = caller_offset(return_address);
+  let path = profile::cost_path(caller);
+  let forwarded_cost = effective_cost(item_id, path, requested_cost);
   if log {
-    let caller = caller_offset(return_address);
     diagnostics::append(&format!(
-      "battle_consume enter caller={caller:#x} item={:p} id={item_id} durability={before:?} combat_art={combat_art} requested_cost={requested_cost} forwarded_cost={forwarded_cost}",
+      "battle_consume enter caller={caller:#x} item={:p} id={item_id} durability={before:?} path={path:?} requested_cost={requested_cost} forwarded_cost={forwarded_cost}",
       item.as_ptr()
     ));
   }
@@ -218,11 +212,6 @@ fn raw_durability_hook(item: *mut Item, cost: i32) -> *mut Item {
   } else {
     0
   };
-  let combat_art = if log {
-    IN_COMBAT_ART.with(Cell::get)
-  } else {
-    false
-  };
   let attack_context = if log {
     ATTACK_CONTEXT.with(Cell::get)
   } else {
@@ -238,7 +227,7 @@ fn raw_durability_hook(item: *mut Item, cost: i32) -> *mut Item {
     let after = unsafe { core::ptr::addr_of!((*item.as_ptr()).durability).read_unaligned() };
     let caller = caller_offset(return_address);
     diagnostics::append(&format!(
-      "raw_decrement caller={caller:#x} lr={return_address:#x} item={:p} id={item_id} durability={before}->{after} cost={cost} combat_art_context={combat_art} attack_context={attack_context:?} battle_consume_context={battle_consume_context}",
+      "raw_decrement caller={caller:#x} lr={return_address:#x} item={:p} id={item_id} durability={before}->{after} cost={cost} attack_context={attack_context:?} battle_consume_context={battle_consume_context}",
       item.as_ptr()
     ));
     if call_number + 1 == RAW_LOG_LIMIT {
