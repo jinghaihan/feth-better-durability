@@ -1,6 +1,6 @@
 [package]
 name = "feth-better-durability"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2021"
 description = "Prevent ordinary attack durability costs in Fire Emblem: Three Houses"
 license = "MIT"
