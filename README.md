@@ -48,6 +48,32 @@ completely before testing.
   before installing its hook. Unsupported or conflicting executable patches
   are left unchanged.
 
+## Diagnostic log
+
+Logging is off by default and does not affect normal gameplay. To enable it,
+create this UTF-8 text file in the SD card root (or the emulator's virtual SD
+card root):
+
+```text
+sdmc:/feth-infinite-weapon-durability.cfg
+```
+
+Its contents should be:
+
+```ini
+diagnostic_log=true
+```
+
+Fully restart the game after changing the file. When enabled, the plugin
+appends to `sdmc:/feth-infinite-weapon-durability.log`. It records the game
+version and hook checks, attack action and item durability, plus the caller
+and actual cost at the underlying durability-decrement function. It does not
+change the durability behavior of any newly observed call path. Diagnostic
+logging can slow the game during the first 2,048 item-decrement calls; after
+testing, remove the configuration file or set `diagnostic_log=false` and
+restart. An absent or invalid configuration leaves logging disabled and does
+not install the low-level diagnostic hook.
+
 ## Build
 
 ```sh
