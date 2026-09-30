@@ -1,9 +1,9 @@
-# FETH Infinite Weapon Durability
+# FETH Better Durability
 
 Prevents ordinary attacks from consuming weapon durability in Fire Emblem:
 Three Houses. Combat arts still consume their original durability cost.
 
-[![build](https://github.com/jinghaihan/feth-infinite-weapon-durability/actions/workflows/build.yml/badge.svg)](https://github.com/jinghaihan/feth-infinite-weapon-durability/actions/workflows/build.yml)
+[![build](https://github.com/jinghaihan/feth-better-durability/actions/workflows/build.yml/badge.svg)](https://github.com/jinghaihan/feth-better-durability/actions/workflows/build.yml)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 > [!WARNING]
@@ -19,7 +19,7 @@ Three Houses. Combat arts still consume their original durability cost.
 ## Install
 
 Install the game-specific Skyline loader, then download the NRO or installable
-ZIP from [Releases](https://github.com/jinghaihan/feth-infinite-weapon-durability/releases).
+ZIP from [Releases](https://github.com/jinghaihan/feth-better-durability/releases).
 Copy `feth-infinite-weapon-durability.nro` to:
 
 ```text
@@ -29,6 +29,9 @@ sdmc:/atmosphere/contents/010055D009F78000/romfs/skyline/plugins/feth-infinite-w
 Fully restart the game. The NRO can coexist with other Skyline plugins that
 do not hook the same battle-consumption function. Remove the NRO to uninstall
 it; the plugin does not write metadata into save files.
+
+The NRO, configuration, and log filenames retain the original name so existing
+installations and diagnostic settings continue to work after the repository rename.
 
 For Eden or Ryubing, install the same Skyline loader in the emulator's
 Atmosphere mod directory, then merge the release ZIP into its emulated SD card.
