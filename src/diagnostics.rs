@@ -8,8 +8,8 @@ use skyline::nn::fs;
 use crate::config;
 
 const MOUNT: &[u8] = b"fethdiag\0";
-const CONFIG_PATH: &[u8] = b"fethdiag:/feth-infinite-weapon-durability.cfg\0";
-const LOG_PATH: &[u8] = b"fethdiag:/feth-infinite-weapon-durability.log\0";
+const CONFIG_PATH: &[u8] = b"fethdiag:/feth-better-durability.cfg\0";
+const LOG_PATH: &[u8] = b"fethdiag:/feth-better-durability.log\0";
 const MAX_CONFIG_BYTES: i64 = 4096;
 static ENABLED: AtomicBool = AtomicBool::new(false);
 static WRITE_LOCK: Mutex<()> = Mutex::new(());

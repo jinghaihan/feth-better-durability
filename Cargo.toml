@@ -1,8 +1,8 @@
 [package]
-name = "feth-infinite-weapon-durability"
+name = "feth-better-durability"
 version = "0.1.2"
 edition = "2021"
-description = "Prevent weapon durability loss in Fire Emblem: Three Houses"
+description = "Prevent ordinary attack durability costs in Fire Emblem: Three Houses"
 license = "MIT"
 publish = false
 repository = "https://github.com/jinghaihan/feth-better-durability"

@@ -20,18 +20,19 @@ Three Houses. Combat arts still consume their original durability cost.
 
 Install the game-specific Skyline loader, then download the NRO or installable
 ZIP from [Releases](https://github.com/jinghaihan/feth-better-durability/releases).
-Copy `feth-infinite-weapon-durability.nro` to:
+Copy `feth-better-durability.nro` to:
 
 ```text
-sdmc:/atmosphere/contents/010055D009F78000/romfs/skyline/plugins/feth-infinite-weapon-durability.nro
+sdmc:/atmosphere/contents/010055D009F78000/romfs/skyline/plugins/feth-better-durability.nro
 ```
 
 Fully restart the game. The NRO can coexist with other Skyline plugins that
 do not hook the same battle-consumption function. Remove the NRO to uninstall
 it; the plugin does not write metadata into save files.
 
-The NRO, configuration, and log filenames retain the original name so existing
-installations and diagnostic settings continue to work after the repository rename.
+When upgrading from the previous project name, remove the old NRO from the
+plugins directory before installing this one. Rename an existing diagnostic
+configuration file to `feth-better-durability.cfg`.
 
 For Eden or Ryubing, install the same Skyline loader in the emulator's
 Atmosphere mod directory, then merge the release ZIP into its emulated SD card.
@@ -58,7 +59,7 @@ create this UTF-8 text file in the SD card root (or the emulator's virtual SD
 card root):
 
 ```text
-sdmc:/feth-infinite-weapon-durability.cfg
+sdmc:/feth-better-durability.cfg
 ```
 
 Its contents should be:
@@ -68,7 +69,7 @@ diagnostic_log=true
 ```
 
 Fully restart the game after changing the file. When enabled, the plugin
-appends to `sdmc:/feth-infinite-weapon-durability.log`. It records the game
+appends to `sdmc:/feth-better-durability.log`. It records the game
 version and hook checks, attack action and item durability, plus the caller
 and actual cost at the underlying durability-decrement function. It does not
 change the durability behavior of any newly observed call path. Diagnostic
@@ -87,7 +88,7 @@ cargo skyline build --release
 ```
 
 The NRO is written to
-`target/aarch64-skyline-switch/release/libfeth_infinite_weapon_durability.nro`.
+`target/aarch64-skyline-switch/release/libfeth_better_durability.nro`.
 
 ## Credits
 

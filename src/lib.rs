@@ -13,7 +13,7 @@ mod diagnostics;
 mod plugin;
 
 #[cfg(target_os = "switch")]
-#[skyline::main(name = "feth_infinite_weapon_durability")]
+#[skyline::main(name = "feth_better_durability")]
 pub fn skyline_main() {
   plugin::install();
 }

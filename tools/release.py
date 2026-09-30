@@ -13,7 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 VERSION_FILE = ROOT / "VERSION"
 CARGO_FILE = ROOT / "Cargo.toml"
-NRO = "target/aarch64-skyline-switch/release/libfeth_infinite_weapon_durability.nro"
+NRO = "target/aarch64-skyline-switch/release/libfeth_better_durability.nro"
 
 
 def run(*args: str, capture: bool = False) -> str:

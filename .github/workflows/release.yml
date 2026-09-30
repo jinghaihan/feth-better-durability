@@ -25,14 +25,14 @@ jobs:
       - name: Prepare and verify NRO
         run: |
           cp \
-            target/aarch64-skyline-switch/release/libfeth_infinite_weapon_durability.nro \
-            feth-infinite-weapon-durability.nro
-          python3 tools/verify_nro.py feth-infinite-weapon-durability.nro
+            target/aarch64-skyline-switch/release/libfeth_better_durability.nro \
+            feth-better-durability.nro
+          python3 tools/verify_nro.py feth-better-durability.nro
 
       - uses: actions/upload-artifact@v7
         with:
-          name: feth-infinite-weapon-durability-release
-          path: feth-infinite-weapon-durability.nro
+          name: feth-better-durability-release
+          path: feth-better-durability.nro
           if-no-files-found: error
 
   release:
@@ -52,18 +52,18 @@ jobs:
 
       - uses: actions/download-artifact@v8
         with:
-          name: feth-infinite-weapon-durability-release
+          name: feth-better-durability-release
 
       - name: Create installable package and checksums
         run: |
           project_version="$(tr -d '[:space:]' < VERSION)"
           package_root="package/atmosphere/contents/010055D009F78000/romfs/skyline/plugins"
           mkdir -p "${package_root}"
-          cp feth-infinite-weapon-durability.nro "${package_root}/feth-infinite-weapon-durability.nro"
-          (cd package && zip -r "../feth-infinite-weapon-durability-v${project_version}.zip" atmosphere)
+          cp feth-better-durability.nro "${package_root}/feth-better-durability.nro"
+          (cd package && zip -r "../feth-better-durability-v${project_version}.zip" atmosphere)
           sha256sum \
-            feth-infinite-weapon-durability.nro \
-            "feth-infinite-weapon-durability-v${project_version}.zip" \
+            feth-better-durability.nro \
+            "feth-better-durability-v${project_version}.zip" \
             > SHA256SUMS
 
       - name: Generate release notes
@@ -75,8 +75,8 @@ jobs:
         run: |
           project_version="$(tr -d '[:space:]' < VERSION)"
           gh release upload "${GITHUB_REF_NAME}" \
-            feth-infinite-weapon-durability.nro \
-            "feth-infinite-weapon-durability-v${project_version}.zip" \
+            feth-better-durability.nro \
+            "feth-better-durability-v${project_version}.zip" \
             SHA256SUMS \
             --clobber
         env:
@@ -87,16 +87,16 @@ jobs:
           project_version="$(tr -d '[:space:]' < VERSION)"
           mkdir release-download
           gh release download "${GITHUB_REF_NAME}" \
-            --pattern feth-infinite-weapon-durability.nro \
-            --pattern "feth-infinite-weapon-durability-v${project_version}.zip" \
+            --pattern feth-better-durability.nro \
+            --pattern "feth-better-durability-v${project_version}.zip" \
             --dir release-download
-          test -s release-download/feth-infinite-weapon-durability.nro
-          test -s "release-download/feth-infinite-weapon-durability-v${project_version}.zip"
-          expected_nro_sha="$(grep ' feth-infinite-weapon-durability.nro$' SHA256SUMS | cut -d ' ' -f 1)"
-          actual_nro_sha="$(sha256sum release-download/feth-infinite-weapon-durability.nro | cut -d ' ' -f 1)"
+          test -s release-download/feth-better-durability.nro
+          test -s "release-download/feth-better-durability-v${project_version}.zip"
+          expected_nro_sha="$(grep ' feth-better-durability.nro$' SHA256SUMS | cut -d ' ' -f 1)"
+          actual_nro_sha="$(sha256sum release-download/feth-better-durability.nro | cut -d ' ' -f 1)"
           test "${actual_nro_sha}" = "${expected_nro_sha}"
-          expected_zip_sha="$(grep " feth-infinite-weapon-durability-v${project_version}.zip$" SHA256SUMS | cut -d ' ' -f 1)"
-          actual_zip_sha="$(sha256sum "release-download/feth-infinite-weapon-durability-v${project_version}.zip" | cut -d ' ' -f 1)"
+          expected_zip_sha="$(grep " feth-better-durability-v${project_version}.zip$" SHA256SUMS | cut -d ' ' -f 1)"
+          actual_zip_sha="$(sha256sum "release-download/feth-better-durability-v${project_version}.zip" | cut -d ' ' -f 1)"
           test "${actual_zip_sha}" = "${expected_zip_sha}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

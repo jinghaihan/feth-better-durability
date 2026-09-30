@@ -22,7 +22,7 @@ pub fn install() {
   let diagnostic = diagnostics::init();
   if !matches_supported_game() {
     diagnostics::append("hooks=not_installed");
-    println!("[feth-infinite-weapon-durability] unsupported or modified game; hook not installed");
+    println!("[feth-better-durability] unsupported or modified game; hook not installed");
     return;
   }
 
@@ -33,7 +33,7 @@ pub fn install() {
       "hooks=installed battle_consume=0xC2E50 attack_cost=0xC30A0 raw_durability=0x40CAC0",
     );
   }
-  println!("[feth-infinite-weapon-durability] ordinary weapon attacks do not consume durability");
+  println!("[feth-better-durability] ordinary weapon attacks do not consume durability");
 }
 
 fn matches_supported_game() -> bool {
