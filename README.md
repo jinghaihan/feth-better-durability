@@ -6,9 +6,6 @@ Three Houses. Combat arts still consume their original durability cost.
 [![build](https://github.com/jinghaihan/feth-better-durability/actions/workflows/build.yml/badge.svg)](https://github.com/jinghaihan/feth-better-durability/actions/workflows/build.yml)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-> [!WARNING]
-> Back up your saves before installing this plugin.
-
 ## Requirements
 
 - Fire Emblem: Three Houses 1.2.0 (Build ID `89048449BA238C8CF565518B83BF02D3`)
@@ -16,6 +13,8 @@ Three Houses. Combat arts still consume their original durability cost.
   [Aldebaran](https://github.com/three-houses-research-team/aldebaran-rs)
 
 ## Install
+
+Back up your saves before installing the plugin.
 
 Install the game-specific Skyline loader, then download the NRO or installable
 ZIP from [Releases](https://github.com/jinghaihan/feth-better-durability/releases).
