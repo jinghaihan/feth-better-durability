@@ -16,6 +16,8 @@ Three Houses. Combat arts still consume their original durability cost.
 
 Back up your saves before installing the plugin.
 
+### Nintendo Switch (Atmosphere)
+
 Install the game-specific Skyline loader, then download the NRO or installable
 ZIP from [Releases](https://github.com/jinghaihan/feth-better-durability/releases).
 Copy `feth-better-durability.nro` to:
@@ -32,7 +34,9 @@ When upgrading from the previous project name, remove the old NRO from the
 plugins directory before installing this one. Rename an existing diagnostic
 configuration file to `feth-better-durability.cfg`.
 
-For Eden or Ryubing, install the same Skyline loader in the emulator's
+### Emulators (Eden or Ryubing)
+
+Install the same Skyline loader in the emulator's
 Atmosphere mod directory, then merge the release ZIP into its emulated SD card.
 The ZIP contains this plugin only, not the Skyline loader. Restart the emulator
 completely before testing.
