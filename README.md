@@ -7,9 +7,7 @@ Three Houses. Combat arts still consume their original durability cost.
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 > [!WARNING]
-> The current combat-art fix is covered by regression tests against a supplied
-> gameplay trace, but has not yet been verified in-game. Back up your saves
-> before trying it.
+> Back up your saves before installing this plugin.
 
 ## Requirements
 
