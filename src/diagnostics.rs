@@ -1,16 +1,17 @@
 use std::sync::{
-  atomic::{AtomicBool, Ordering},
+  atomic::{AtomicBool, AtomicUsize, Ordering},
   Mutex,
 };
 
 use skyline::nn::fs;
 
-use crate::config;
+use crate::{config, rolling_log};
 
 const MOUNT: &[u8] = b"fethdiag\0";
 const CONFIG_PATH: &[u8] = b"fethdiag:/feth-better-durability.cfg\0";
 const LOG_PATH: &[u8] = b"fethdiag:/feth-better-durability.log\0";
 const MAX_CONFIG_BYTES: i64 = 4096;
+static MAX_LOG_BYTES: AtomicUsize = AtomicUsize::new(2 * 1024 * 1024);
 static ENABLED: AtomicBool = AtomicBool::new(false);
 static WRITE_LOCK: Mutex<()> = Mutex::new(());
 
@@ -32,14 +33,15 @@ pub fn init() -> bool {
   let Some(contents) = read_config() else {
     return false;
   };
-  let setting = match config::diagnostic_log_enabled(&contents) {
+  let settings = match config::parse(&contents) {
     Ok(value) => value,
     Err(error) => {
       println!("[feth-diag] invalid configuration: {error}");
       return false;
     }
   };
-  if !setting {
+  MAX_LOG_BYTES.store(settings.log_max_kib * 1024, Ordering::Release);
+  if !settings.diagnostic_log {
     return false;
   }
 
@@ -48,23 +50,10 @@ pub fn init() -> bool {
   unsafe {
     fs::CreateFile(LOG_PATH.as_ptr(), 0);
   }
-  let mut handle = fs::FileHandle { handle: 0 };
-  let open_result = unsafe {
-    fs::OpenFile(
-      &mut handle,
-      LOG_PATH.as_ptr(),
-      (fs::OpenMode_OpenMode_Write | fs::OpenMode_OpenMode_Append) as i32,
-    )
-  };
-  if open_result != 0 {
-    println!("[feth-diag] log open failed: {open_result:#x}");
-    return false;
-  }
-  unsafe { fs::CloseFile(handle) };
-
   ENABLED.store(true, Ordering::Release);
   append("=== feth durability diagnostic; new game launch ===");
-  true
+  append(&format!("log_max_kib={}", settings.log_max_kib));
+  enabled()
 }
 
 fn read_config() -> Option<String> {
@@ -117,34 +106,18 @@ pub fn append(message: &str) {
   let Ok(_lock) = WRITE_LOCK.lock() else {
     return;
   };
-  let mut handle = fs::FileHandle { handle: 0 };
-  // SAFETY: LOG_PATH is NUL-terminated. The handle is used only after a
-  // successful open, and the line buffer outlives WriteFile.
-  unsafe {
-    let open_result = fs::OpenFile(
-      &mut handle,
-      LOG_PATH.as_ptr(),
-      (fs::OpenMode_OpenMode_Write | fs::OpenMode_OpenMode_Append) as i32,
-    );
-    if open_result != 0 {
-      println!("[feth-diag] log open failed: {open_result:#x}; {message}");
-      return;
-    }
-    let mut offset = 0i64;
-    let size_result = fs::GetFileSize(&mut offset, handle);
-    if size_result != 0 {
-      println!("[feth-diag] log size failed: {size_result:#x}");
-      fs::CloseFile(handle);
-      return;
-    }
+  let result = (|| {
+    let mut file = rolling_log::switch::File::open(LOG_PATH)?;
     let line = format!("{message}\n");
-    let option = fs::WriteOption {
-      flags: fs::WriteOptionFlag_WriteOptionFlag_Flush as i32,
-    };
-    let write_result = fs::WriteFile(handle, offset, line.as_ptr(), line.len() as u64, &option);
-    fs::CloseFile(handle);
-    if write_result != 0 {
-      println!("[feth-diag] log write failed: {write_result:#x}; {message}");
-    }
+    rolling_log::append(
+      &mut file,
+      line.as_bytes(),
+      MAX_LOG_BYTES.load(Ordering::Acquire) as u64,
+    )?;
+    file.flush()
+  })();
+  if let Err(error) = result {
+    ENABLED.store(false, Ordering::Release);
+    println!("[feth-diag] log failed: {error}");
   }
 }

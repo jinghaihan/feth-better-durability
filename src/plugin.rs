@@ -1,16 +1,10 @@
 use core::{cell::Cell, ffi::c_void, ptr::NonNull};
-use std::sync::atomic::{AtomicUsize, Ordering};
 
 use crate::{
   diagnostics,
   durability::effective_cost,
   game::{layout::Item, profile},
 };
-
-static ATTACK_LOG_COUNT: AtomicUsize = AtomicUsize::new(0);
-static CONSUME_LOG_COUNT: AtomicUsize = AtomicUsize::new(0);
-static RAW_LOG_COUNT: AtomicUsize = AtomicUsize::new(0);
-const RAW_LOG_LIMIT: usize = 2048;
 
 std::thread_local! {
   static ATTACK_CONTEXT: Cell<Option<(u16, u8, u8)>> = const { Cell::new(None) };
@@ -94,7 +88,7 @@ fn attack_cost_hook(
   unsafe {
     core::arch::asm!("mov {}, x30", out(reg) return_address, options(nomem, nostack, preserves_flags));
   }
-  let log = diagnostics::enabled() && ATTACK_LOG_COUNT.fetch_add(1, Ordering::Relaxed) < 128;
+  let log = diagnostics::enabled();
   let Some(record) = NonNull::new(attack_record.cast_mut()) else {
     if log {
       diagnostics::append(&format!(
@@ -143,7 +137,7 @@ fn battle_consume_hook(unit: *mut c_void, item: *mut Item, requested_cost: i32) 
   unsafe {
     core::arch::asm!("mov {}, x30", out(reg) return_address, options(nomem, nostack, preserves_flags));
   }
-  let log = diagnostics::enabled() && CONSUME_LOG_COUNT.fetch_add(1, Ordering::Relaxed) < 128;
+  let log = diagnostics::enabled();
   let Some(item) = NonNull::new(item) else {
     if log {
       diagnostics::append(&format!(
@@ -205,8 +199,7 @@ fn raw_durability_hook(item: *mut Item, cost: i32) -> *mut Item {
   // Deliberately do not filter IDs; the assumed weapon ID range is one of
   // the things this diagnostic should be able to disprove.
   let item_id = unsafe { core::ptr::addr_of!((*item.as_ptr()).id).read_unaligned() };
-  let call_number = RAW_LOG_COUNT.fetch_add(1, Ordering::Relaxed);
-  let log = call_number < RAW_LOG_LIMIT;
+  let log = diagnostics::enabled();
   let before = if log {
     unsafe { core::ptr::addr_of!((*item.as_ptr()).durability).read_unaligned() }
   } else {
@@ -230,9 +223,6 @@ fn raw_durability_hook(item: *mut Item, cost: i32) -> *mut Item {
       "raw_decrement caller={caller:#x} lr={return_address:#x} item={:p} id={item_id} durability={before}->{after} cost={cost} attack_context={attack_context:?} battle_consume_context={battle_consume_context}",
       item.as_ptr()
     ));
-    if call_number + 1 == RAW_LOG_LIMIT {
-      diagnostics::append("raw_decrement log_limit_reached");
-    }
   }
   result
 }

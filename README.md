@@ -71,17 +71,24 @@ Its contents should be:
 
 ```ini
 diagnostic_log=true
+log_max_kib=2048
 ```
 
 Fully restart the game after changing the file. When enabled, the plugin
 appends to `sdmc:/feth-better-durability.log`. It records the game
 version and hook checks, action-record fields and item durability, plus the
 call path, requested cost, forwarded cost, and underlying durability changes.
+`log_max_kib` accepts 64–65536 KiB and defaults to 2048 KiB (2 MiB). Once the
+limit is reached, the logger drops the oldest complete lines, keeps roughly
+the newest half, and continues writing. Existing oversized logs are trimmed
+the same way, and configurations containing only `diagnostic_log` remain valid.
+
 Action-record fields are diagnostic only and do not control the cost policy.
 It does not change the durability behavior of any newly observed call path.
-Diagnostic logging can slow the game during the first 2,048 item-decrement
-calls; after testing, remove the configuration file or set `diagnostic_log=false` and
-restart. An absent or invalid configuration leaves logging disabled and does
+Diagnostic logging records calls throughout the session and can slow the game;
+after testing, remove the configuration file or set `diagnostic_log=false` and
+restart. A log-file I/O failure disables logging, not the durability rules.
+An absent or invalid configuration leaves logging disabled and does
 not install the action-record or low-level diagnostic hooks.
 
 ## Build

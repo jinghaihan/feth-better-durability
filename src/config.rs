@@ -1,27 +1,54 @@
-/// A missing configuration file is equivalent to this default.
-pub const DEFAULT_DIAGNOSTIC_LOG: bool = false;
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Settings {
+  pub diagnostic_log: bool,
+  pub log_max_kib: usize,
+}
 
-pub fn diagnostic_log_enabled(contents: &str) -> Result<bool, &'static str> {
-  let mut configured = None;
+impl Default for Settings {
+  fn default() -> Self {
+    Self {
+      diagnostic_log: false,
+      log_max_kib: 2048,
+    }
+  }
+}
+
+pub fn parse(contents: &str) -> Result<Settings, &'static str> {
+  let mut settings = Settings::default();
+  let mut seen = [false; 2];
   for line in contents.lines() {
     let line = line.trim();
     if line.is_empty() || line.starts_with('#') {
       continue;
     }
     let (key, value) = line.split_once('=').ok_or("expected key=value")?;
-    if key.trim() != "diagnostic_log" {
-      return Err("unknown configuration key");
+    let index = match key.trim() {
+      "diagnostic_log" => 0,
+      "log_max_kib" => 1,
+      _ => return Err("unknown configuration key"),
+    };
+    if seen[index] {
+      return Err("duplicate configuration key");
     }
-    if configured.is_some() {
-      return Err("duplicate diagnostic_log setting");
+    seen[index] = true;
+    match index {
+      0 => {
+        settings.diagnostic_log = match value.trim() {
+          "true" => true,
+          "false" => false,
+          _ => return Err("diagnostic_log must be true or false"),
+        };
+      }
+      1 => {
+        settings.log_max_kib = value.trim().parse().map_err(|_| "invalid log_max_kib")?;
+        if !(64..=65536).contains(&settings.log_max_kib) {
+          return Err("log_max_kib must be between 64 and 65536");
+        }
+      }
+      _ => unreachable!(),
     }
-    configured = Some(match value.trim() {
-      "true" => true,
-      "false" => false,
-      _ => return Err("diagnostic_log must be true or false"),
-    });
   }
-  Ok(configured.unwrap_or(DEFAULT_DIAGNOSTIC_LOG))
+  Ok(settings)
 }
 
 #[cfg(test)]
@@ -30,23 +57,36 @@ mod tests {
 
   #[test]
   fn defaults_to_off() {
-    assert!(!DEFAULT_DIAGNOSTIC_LOG);
-    assert_eq!(diagnostic_log_enabled("# comment\n"), Ok(false));
+    assert_eq!(parse("# comment\n"), Ok(Settings::default()));
   }
 
   #[test]
   fn parses_explicit_setting() {
-    assert_eq!(diagnostic_log_enabled("diagnostic_log=true\n"), Ok(true));
-    assert_eq!(
-      diagnostic_log_enabled(" diagnostic_log = false\r\n"),
-      Ok(false)
-    );
+    assert!(parse("diagnostic_log=true\n").unwrap().diagnostic_log);
+    assert!(!parse(" diagnostic_log = false\r\n").unwrap().diagnostic_log);
+    assert_eq!(parse("diagnostic_log=true").unwrap().log_max_kib, 2048);
+    for size in [64, 1024, 65536] {
+      assert_eq!(
+        parse(&format!("log_max_kib={size}")).unwrap().log_max_kib,
+        size
+      );
+    }
   }
 
   #[test]
   fn rejects_ambiguous_settings() {
-    assert!(diagnostic_log_enabled("diagnostic_log=yes").is_err());
-    assert!(diagnostic_log_enabled("diagnostic_log=true\ndiagnostic_log=false").is_err());
-    assert!(diagnostic_log_enabled("other=true").is_err());
+    for contents in [
+      "diagnostic_log=yes",
+      "diagnostic_log=true\ndiagnostic_log=false",
+      "other=true",
+      "log_max_kib=64\nlog_max_kib=128",
+      "log_max_kib=0",
+      "log_max_kib=63",
+      "log_max_kib=65537",
+      "log_max_kib=-1",
+      "log_max_kib=huge",
+    ] {
+      assert!(parse(contents).is_err(), "{contents}");
+    }
   }
 }
